@@ -1,0 +1,10 @@
+flask
+flask_sqlalchemy
+pymysql
+flask_apscheduler
+pandas
+openpyxl
+qrcode
+pillow
+python-dotenv
+pytest
