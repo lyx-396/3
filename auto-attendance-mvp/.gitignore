@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+instance/
+.env
+uploads/
+exports/
+auto.db
+*.sqlite3
+*.xlsx
+*.csv~
+.venv/
+.idea/
+.DS_Store

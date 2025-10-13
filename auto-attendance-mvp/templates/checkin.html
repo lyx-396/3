@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Session Check-In</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+    <h1>Attendance Check-In</h1>
+</header>
+<main>
+    <section>
+        <p id="session-window"></p>
+        <form id="checkin-form">
+            <input type="hidden" id="sid" value="{{ sid }}">
+            <input type="hidden" id="token" name="token">
+            <input type="hidden" id="lat" name="lat">
+            <input type="hidden" id="lng" name="lng">
+            <input type="hidden" id="device" name="device">
+            <label for="student_no">Student Number</label>
+            <input type="text" id="student_no" name="student_no" required placeholder="e.g. 2024001">
+            <button type="submit" class="button">Check In</button>
+        </form>
+        <div id="message" class="alert" style="display:none;"></div>
+        <p class="note">Tokens rotate every 30 seconds. Keep this page open to refresh automatically.</p>
+        <p class="note">All times shown are UTC. Adjust mentally for your local timezone.</p>
+    </section>
+</main>
+<footer>
+    <small>&copy; {{ year }} Auto Attendance MVP</small>
+</footer>
+<script>
+const sid = document.getElementById('sid').value;
+const message = document.getElementById('message');
+const tokenInput = document.getElementById('token');
+const latInput = document.getElementById('lat');
+const lngInput = document.getElementById('lng');
+const deviceInput = document.getElementById('device');
+const windowLabel = document.getElementById('session-window');
+
+deviceInput.value = navigator.userAgent;
+
+async function refreshToken() {
+    try {
+        const res = await fetch(`/api/session_token?sid=${encodeURIComponent(sid)}`);
+        if (!res.ok) {
+            throw new Error('Unable to fetch session token');
+        }
+        const data = await res.json();
+        tokenInput.value = data.token || '';
+        if (data.window) {
+            windowLabel.textContent = `Window: ${data.window.start} - ${data.window.end} (UTC)`;
+        }
+        if (data.status === 'CLOSED') {
+            showMessage('Session is currently closed.', true);
+        }
+    } catch (err) {
+        console.error(err);
+        showMessage('Failed to refresh token. Please retry.', true);
+    }
+}
+
+function showMessage(text, error=false) {
+    message.textContent = text;
+    message.style.display = 'block';
+    message.className = 'alert ' + (error ? 'alert-error' : 'alert-success');
+}
+
+function acquirePosition() {
+    if (!navigator.geolocation) {
+        showMessage('Geolocation not supported. Check-in may be rejected.', true);
+        return;
+    }
+    navigator.geolocation.getCurrentPosition((pos) => {
+        latInput.value = pos.coords.latitude;
+        lngInput.value = pos.coords.longitude;
+    }, (err) => {
+        console.warn(err);
+        showMessage('Unable to acquire GPS coordinates. Check-in may be rejected.', true);
+    });
+}
+
+document.getElementById('checkin-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    formData.append('sid', sid);
+    try {
+        const res = await fetch('/api/checkin', {
+            method: 'POST',
+            body: formData
+        });
+        const payload = await res.json();
+        if (res.ok) {
+            showMessage(payload.message || 'Check-in successful!');
+        } else {
+            showMessage(payload.message || 'Check-in failed.', true);
+        }
+    } catch (err) {
+        console.error(err);
+        showMessage('Network error during check-in.', true);
+    }
+});
+
+setInterval(refreshToken, 8000);
+refreshToken();
+acquirePosition();
+</script>
+</body>
+</html>

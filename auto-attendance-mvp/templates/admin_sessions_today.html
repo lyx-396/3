@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Today's Sessions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+    <h1>Today's Sessions (UTC)</h1>
+</header>
+<main>
+    <section>
+        <p>Daily sessions are automatically created from the timetable at 00:10 UTC. Tokens rotate every 30 seconds during the open window (start - 10min to end + 5min).</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Class</th>
+                    <th>Room</th>
+                    <th>Window</th>
+                    <th>Status</th>
+                    <th>On Time</th>
+                    <th>Late</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr>
+                    <td>{{ session.course.name }}</td>
+                    <td>{{ session.course.class_name }}</td>
+                    <td>{{ session.room }}</td>
+                    <td>{{ session.start_time }} → {{ session.end_time }} (UTC)</td>
+                    <td class="status-{{ session.status|lower }}">{{ session.status }}</td>
+                    <td>{{ session.count_on_time }}</td>
+                    <td>{{ session.count_late }}</td>
+                    <td>
+                        <a class="button" href="/admin/sessions/{{ session.id }}/qrcode" target="_blank">Show QR</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">No sessions scheduled for today yet. Upload a timetable or wait for the scheduler.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <section>
+            <h2>Face Check (optional)</h2>
+            <p>Face verification endpoints exist as stubs today. Integrate with your vendor of choice and mark TODOs in <code>/api/face_check</code>.</p>
+        </section>
+    </section>
+</main>
+<footer>
+    <small>&copy; {{ year }} Auto Attendance MVP</small>
+</footer>
+</body>
+</html>
